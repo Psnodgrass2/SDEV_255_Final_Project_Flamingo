@@ -26,6 +26,7 @@
         <v-list-item>Delete courses you have created.</v-list-item>
         <v-list-item>The courses will be displayed in the course list on the left side after you've logged in, and each teacher will only see courses they've created.</v-list-item>
         <v-list-item>Maybe a student list that can go using a linked key in the database that allows you to view which class each student is in?</v-list-item>
+        <v-list-item>The majority of the project will be done in the backend, and will attempt to update the page without needing to reload.</v-list-item>
 </v-list>
         </div>
       </v-main>
