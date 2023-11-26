@@ -1,18 +1,23 @@
 <template>
-  <div id = 'app'>
-    <messages-text />
-  </div>
+  <v-app>
+    <v-main>
+      <MessagesText/>
+    </v-main>
+  </v-app>
 </template>
 
 <script>
-import MessageText from './components/MessagesText.vue'
+import MessagesText from './components/MessagesText.vue'
 
 export default {
   name: 'App',
+
   components: {
-    'messages-text': MessageText
-  }
+    MessagesText,
+  },
+
+  data: () => ({
+    //
+  }),
 }
 </script>
-
-
