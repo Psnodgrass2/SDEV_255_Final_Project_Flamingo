@@ -3,6 +3,8 @@ const app = express();
 const port = 3000;
 
 app.use(require('cors')())
+app.use(express.urlencoded({ extended: true }))
+app.use(require('body-parser')())
 
 // @todo will be in database but just for initial purposes
 const DATABASE = {
@@ -100,6 +102,15 @@ app.get('/courses', (req, res) => {
 app.get('/course/:id', (req, res) => {
   if (DATABASE.courses[req.params.id]) {
     res.send(DATABASE.courses[req.params.id])
+  } else {
+    res.status(404).send({})
+  }
+})
+
+app.post('/course/update/:id', (req, res) => {
+  if (DATABASE.courses[req.params.id]) {
+    DATABASE.courses[req.params.id] = Object.assign({}, DATABASE.courses[req.params.id], req.body)
+    res.send({})
   } else {
     res.status(404).send({})
   }
