@@ -100,20 +100,40 @@ app.get('/courses', (req, res) => {
 })
 
 app.get('/course/:id', (req, res) => {
-  if (DATABASE.courses[req.params.id]) {
-    res.send(DATABASE.courses[req.params.id])
+  const id = parseInt(req.params.id)
+
+  if (DATABASE.courses[id]) {
+    res.send(DATABASE.courses[id])
   } else {
     res.status(404).send({})
   }
 })
 
 app.post('/course/update/:id', (req, res) => {
-  if (DATABASE.courses[req.params.id]) {
-    DATABASE.courses[req.params.id] = Object.assign({}, DATABASE.courses[req.params.id], req.body)
+  const id = parseInt(req.params.id)
+
+  if (DATABASE.courses[id]) {
+    DATABASE.courses[id] = Object.assign({}, DATABASE.courses[id], req.body)
     res.send({})
   } else {
     res.status(404).send({})
   }
+})
+
+app.post('/course/delete/:id', (req, res) => {
+  const id = parseInt(req.params.id)
+
+  if (DATABASE.courses[id]) {
+    DATABASE.courses.splice(id, 1)
+    res.send({})
+  } else {
+    res.status(404).send({})
+  }
+})
+
+app.post('/course/create', (req, res) => {
+  DATABASE.courses.push(req.body)
+  res.send({})
 })
 
 app.listen(port, () => console.log(`App running at http://localhost:${port}`))
