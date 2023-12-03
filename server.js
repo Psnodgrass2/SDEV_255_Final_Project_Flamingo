@@ -2,6 +2,8 @@ const express = require('express')
 const app = express();
 const port = 3000;
 
+app.use(require('cors')())
+
 // @todo will be in database but just for initial purposes
 const DATABASE = {
   courses: [
@@ -89,6 +91,18 @@ const DATABASE = {
 
 app.get('/', (req, res) => {
   res.send('hi');
+})
+
+app.get('/courses', (req, res) => {
+  res.send(DATABASE.courses)
+})
+
+app.get('/course/:id', (req, res) => {
+  if (DATABASE.courses[req.params.id]) {
+    res.send(DATABASE.courses[req.params.id])
+  } else {
+    res.status(404).send({})
+  }
 })
 
 app.listen(port, () => console.log(`App running at http://localhost:${port}`))
