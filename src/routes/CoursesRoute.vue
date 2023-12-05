@@ -22,14 +22,14 @@
       </thead>
       <tbody>
         <tr v-for="(item, index) in courses" :key="index">
-          <td>{{ index }}</td>
-          <td><router-link :to="`/course/view/${index}`">{{ item.name }}</router-link></td>
+          <td>{{ item.id }}</td>
+          <td><router-link :to="`/course/view/${item.id}`">{{ item.name }}</router-link></td>
           <td>{{ item.description }}</td>
           <td>{{ item.subjectArea }}</td>
           <td class="text-right">
             <v-btn-group divided variant="outlined">
-              <v-btn density="compact" :to="`/course/edit/${index}`">Edit</v-btn>
-              <v-btn density="compact" :to="`/course/delete/${index}`" color="red">Delete</v-btn>
+              <v-btn density="compact" :to="`/course/edit/${item.id}`">Edit</v-btn>
+              <v-btn density="compact" :to="`/course/delete/${item.id}`" color="red">Delete</v-btn>
             </v-btn-group>
           </td>
         </tr>

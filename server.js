@@ -1,139 +1,97 @@
-const express = require('express')
+const express = require('express');
+const bodyParser = require('body-parser');
+const sqlite3 = require('sqlite3').verbose();
 const app = express();
 const port = 3000;
 
 app.use(require('cors')())
 app.use(express.urlencoded({ extended: true }))
-app.use(require('body-parser')())
+app.use(bodyParser.json());
 
-// @todo will be in database but just for initial purposes
-const DATABASE = {
-  courses: [
-    {
-      name: "English Composition",
-      description: "Learn about English and its composition.",
-      creditHours: 3,
-      subjectArea: "Language Arts",
-      teacherId: 2000,
-    },
-    {
-      name: "Introduction to Mathematics",
-      description: "Explore fundamental concepts in mathematics.",
-      creditHours: 4,
-      subjectArea: "Mathematics",
-      teacherId: 2004,
-    },
-    {
-      name: "History of Art",
-      description: "Discover the evolution of art throughout history.",
-      creditHours: 3,
-      subjectArea: "Fine Arts",
-      teacherId: 2001,
-    },
-    {
-      name: "Programming Fundamentals",
-      description: "Get started with the basics of programming.",
-      creditHours: 5,
-      subjectArea: "Computer Science",
-      teacherId: 2000,
-    },
-    {
-      name: "Environmental Science",
-      description:
-        "Study the interactions between organisms and their environment.",
-      creditHours: 4,
-      subjectArea: "Environmental Science",
-      teacherId: 2004,
-    },
-    {
-      name: "Introduction to Psychology",
-      description:
-        "Learn about the fundamentals of human behavior and the mind.",
-      creditHours: 3,
-      subjectArea: "Psychology",
-      teacherId: 2001,
-    },
-    {
-      name: "Digital Marketing Essentials",
-      description: "Understand key concepts in digital marketing strategies.",
-      creditHours: 4,
-      subjectArea: "Marketing",
-      teacherId: 2001,
-    },
-    {
-      name: "Introduction to Astrophysics",
-      description: "Explore the wonders of the universe and celestial bodies.",
-      creditHours: 5,
-      subjectArea: "Astrophysics",
-      teacherId: 2003,
-    },
-    {
-      name: "Business Ethics",
-      description: "Examine ethical principles in the business world.",
-      creditHours: 3,
-      subjectArea: "Business Ethics",
-      teacherId: 2000,
-    },
-    {
-      name: "Introduction to Sociology",
-      description: "Study the structure and dynamics of human society.",
-      creditHours: 4,
-      subjectArea: "Sociology",
-      teacherId: 2003,
-    },
-  ],
-  teachers: {
-    2000: { id: 2000, name: 'Professor Smith' },
-    2001: { id: 2001, name: 'Professor Johnson' },
-    2002: { id: 2002, name: 'Professor Davis' },
-    2003: { id: 2003, name: 'Professor Brown' },
-    2004: { id: 2004, name: 'Professor Wilson' },  
-  }
-};
+//this is the variable for the database. to initialize a new one, look at databaseinitialize.js
+const db = new sqlite3.Database('./serverdatabase.db');
+
 
 app.get('/', (req, res) => {
   res.send('hi');
-})
+});
 
+// Retrieve all courses
 app.get('/courses', (req, res) => {
-  res.send(DATABASE.courses)
-})
+  db.all('SELECT * FROM courses', (err, rows) => {
+    if (err) {
+      console.error(err.message);
+      res.status(500).send('Internal Server Error');
+      return;
+    }
+    res.send(rows);
+  });
+});
 
+// Retrieve a specific course by ID
 app.get('/course/:id', (req, res) => {
-  const id = parseInt(req.params.id)
+  const id = parseInt(req.params.id);
 
-  if (DATABASE.courses[id]) {
-    res.send(DATABASE.courses[id])
-  } else {
-    res.status(404).send({})
-  }
-})
+  db.get('SELECT * FROM courses WHERE id = ?', [id], (err, row) => {
+    if (err) {
+      console.error(err.message);
+      res.status(500).send('Internal Server Error');
+      return;
+    }
+    if (row) {
+      res.send(row);
+    } else {
+      res.status(404).send({});
+    }
+  });
+});
 
+// Update a course by ID
 app.post('/course/update/:id', (req, res) => {
-  const id = parseInt(req.params.id)
+  const id = parseInt(req.params.id);
 
-  if (DATABASE.courses[id]) {
-    DATABASE.courses[id] = Object.assign({}, DATABASE.courses[id], req.body)
-    res.send({})
-  } else {
-    res.status(404).send({})
-  }
-})
+  db.run(
+    'UPDATE courses SET name = ?, description = ?, creditHours = ?, subjectArea = ?, teacherId = ? WHERE id = ?',
+    [req.body.name, req.body.description, req.body.creditHours, req.body.subjectArea, req.body.teacherId, id],
+    function (err) {
+      if (err) {
+        console.error(err.message);
+        res.status(500).send('Internal Server Error');
+        return;
+      }
+      res.send({});
+    }
+  );
+});
 
+// Delete a course by ID
 app.post('/course/delete/:id', (req, res) => {
-  const id = parseInt(req.params.id)
+  const id = parseInt(req.params.id);
+  console.log("Deleting course:" + id)
+  db.run('DELETE FROM courses WHERE id = ?', [id], function (err) {
+    if (err) {
+      console.error(err.message);
+      res.status(500).send('Internal Server Error');
+      return;
+    }
+    res.send({});
+  });
+});
 
-  if (DATABASE.courses[id]) {
-    DATABASE.courses.splice(id, 1)
-    res.send({})
-  } else {
-    res.status(404).send({})
-  }
-})
-
+// Create a new course
 app.post('/course/create', (req, res) => {
-  DATABASE.courses.push(req.body)
-  res.send({})
-})
+  db.run(
+    'INSERT INTO courses (name, description, creditHours, subjectArea, teacherId) VALUES (?, ?, ?, ?, ?)',
+    [req.body.name, req.body.description, req.body.creditHours, req.body.subjectArea, req.body.teacherId],
+    function (err) {
+      if (err) {
+        console.error(err.message);
+        res.status(500).send('Internal Server Error');
+        return;
+      }
+      res.send({});
+    }
+  );
+});
 
-app.listen(port, () => console.log(`App running at http://localhost:${port}`))
+app.listen(port, () => console.log(`App running at http://localhost:${port}`));
