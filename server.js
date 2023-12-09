@@ -1,16 +1,59 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const sqlite3 = require('sqlite3').verbose();
+const bcrypt = require('bcrypt');
 const app = express();
 const port = 3000;
+const session = require('express-session');
+const uuid = require('uuid');
+
+
+
 
 app.use(require('cors')())
 app.use(express.urlencoded({ extended: true }))
 app.use(bodyParser.json());
+app.use(
+  session({
+    genid: (req) => {
+      return uuid.v4(); // generate unique session IDs using uuid
+    },
+    secret: 'your-secret-key',
+    resave: false,
+    saveUninitialized: true,
+    cookie: {
+      secure: true, // Always use secure flag in production // Always use httpOnly for session cookies
+      sameSite: 'None', // Set to none for multiple origins, lax or strict for single origin
+    },
+  })
+);
 
 //this is the variable for the database. to initialize a new one, look at databaseinitialize.js
 const db = new sqlite3.Database('./serverdatabase.db');
 
+// Middleware to check if the user is authenticated
+function isAuthenticated(req, res, next) {
+  const userId = req.session.userId; // Assuming you store user ID in the session
+
+  // If the user is authenticated (userId exists in the session)
+  if (userId) {
+    // Proceed to the next middleware or route handler
+    next();
+  } else {
+    // If the user is not authenticated, redirect to the login page
+    res.redirect('/login');
+  }
+}
+
+app.get('/test-session', (req, res) => {
+  req.session.userId = 'test-user-id';
+  res.send('Session set');
+});
+
+app.get('/check-session', (req, res) => {
+  const userId = req.session.userId;
+  res.send(`User ID from session: ${userId}`);
+});
 
 app.get('/', (req, res) => {
   res.send('hi');
@@ -18,6 +61,7 @@ app.get('/', (req, res) => {
 
 // Retrieve all courses
 app.get('/courses', (req, res) => {
+  console.log(req.session.userId);
   db.all('SELECT * FROM courses', (err, rows) => {
     if (err) {
       console.error(err.message);
@@ -92,6 +136,81 @@ app.post('/course/create', (req, res) => {
       res.send({});
     }
   );
+});
+
+app.post('/register', async (req, res) => {
+  const { username, password, isTeacher } = req.body;
+  console.log(req.session.userId);
+  // Hash and salt the password
+  const hashedPassword = await bcrypt.hash(password, 10);
+
+  // Insert user into the database
+  const uuidValue = uuid.v4();
+  db.run(
+    'INSERT INTO users (username, password, isTeacher, uuid) VALUES (?, ?, ?, ?)',
+    [username, hashedPassword, isTeacher, uuidValue],
+    (err) => {
+      if (err) {
+        return res.status(500).json({ error: 'Error registering user' });
+      }
+      res.json({ message: 'User registered successfully' });
+    }
+  );
+});
+//login route
+app.post('/login', async (req, res) => {
+  const { username, password } = req.body;
+
+  // Retrieve user from the database
+  db.get('SELECT * FROM users WHERE username = ?', [username], async (err, user) => {
+    if (err) {
+      return res.status(500).json({ error: 'Error finding user' });
+    }
+
+    // Check if the user exists and compare passwords
+    if (user && (await bcrypt.compare(password, user.password))) {
+      // Use a pre-generated UUID or retrieve it from the user data in the database
+      const userId = uuid.v4();
+
+      // Set the user ID in the session
+      req.session.userId = userId;
+
+      try {
+        await req.session.save();  // Simply calling save without a callback
+      } catch (saveError) {
+        console.error('Error saving session:', saveError);
+        return res.status(500).json({ error: 'Error saving session' });
+      }
+
+      res.json({ userId });
+    } else {
+      res.status(401).json({ error: 'Invalid username or password' });
+    }
+  });
+});
+
+app.get('/userinfo', (req, res) => {
+  // Assuming userId is stored in the session
+  const userId = req.session.userId;
+  console.log(userId)
+  // Fetch user information from the database or any other source
+  // Example using SQLite3
+  db.get('SELECT username FROM users WHERE uuid = ?', [userId], (err, user) => {
+    if (err) {
+      return res.status(500).json({ error: 'Error retrieving user information' });
+    }
+
+    if (user) {
+      // Respond with user-specific data, including the username
+      const userInfo = {
+        userId: userId,
+        username: user.username,
+      };
+      res.json(userInfo);
+    } else {
+      res.status(404).json({ error: 'User not found' });
+    }
+  });
 });
 
 app.listen(port, () => console.log(`App running at http://localhost:${port}`));

@@ -12,6 +12,10 @@ import CourseRoute from './routes/CourseRoute'
 import EditCourseRoute from './routes/EditCourseRoute'
 import DeleteCourseRoute from './routes/DeleteCourseRoute'
 import CreateCourseRoute from './routes/CreateCourseRoute'
+import RegisterAccount from './routes/RegisterAccount'
+import LoginAccount from './routes/LoginAccount'
+import LogoutAccount from './routes/LogoutAccount'
+import MyAccount from './routes/MyAccount'
 
 const router = createRouter({
   // 4. Provide the history implementation to use. We are using the hash history for simplicity here.
@@ -23,6 +27,10 @@ const router = createRouter({
     { path: '/course/edit/:id', component: EditCourseRoute },
     { path: '/course/delete/:id', component: DeleteCourseRoute },
     { path: '/create/course', component: CreateCourseRoute },
+    { path: '/register', component: RegisterAccount },
+    { path: '/login', component: LoginAccount },
+    { path: '/logout', component: LogoutAccount },
+    { path: '/account', component: MyAccount },
   ]
 })
 

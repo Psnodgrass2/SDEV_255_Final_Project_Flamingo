@@ -94,8 +94,15 @@ const teachers = {
     2004: { id: 2004, name: 'Professor Wilson' },  
   }
 
-
-
+const users = [
+  {
+    username: "admin",
+    password: "1234",
+    isTeacher: true,
+    uuid: "null",
+  }
+]
+//courses
 db.serialize(() => {
   db.run('CREATE TABLE IF NOT EXISTS courses (id INTEGER PRIMARY KEY, name TEXT, description TEXT, creditHours INTEGER, subjectArea TEXT, teacherId INTEGER)');
  
@@ -108,7 +115,7 @@ db.serialize(() => {
   insertCourse.finalize();
   
 });
-
+//teachers
 db.serialize(() => {
   db.run('CREATE TABLE IF NOT EXISTS teachers (id INTEGER PRIMARY KEY, name TEXT)');
  
@@ -119,5 +126,18 @@ db.serialize(() => {
   });
 
   insertTeacher.finalize();
+
+});
+//logins
+db.serialize(() => {
+  db.run('CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT UNIQUE, password TEXT, isTeacher INTEGER, uuid TEXT)');
+ 
+  const insertUsers = db.prepare('INSERT OR REPLACE INTO users (id, username, password, isTeacher, uuid) VALUES (?, ?, ?, ?, ?)');
+
+  Object.values(users).forEach((user) => {
+    insertUsers.run(user.id, user.username, user.password, user.isTeacher);
+  });
+
+  insertUsers.finalize();
 
 });
