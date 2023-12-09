@@ -44,10 +44,25 @@ import axios from 'axios';
 export default {
   data: () => ({
     courses: [],
+    pizza: "",
   }),
   async created() {
-    this.courses = (await axios.get('http://localhost:3000/courses')).data;
-    console.log(this.courses)
+    try
+    {
+      this.pizza = localStorage.getItem('isTeacher')
+    }
+    catch(err){console.error(err)}
+    const config = 
+      {headers:{
+        'authorization': this.pizza
+      }}
+    try {
+      this.courses = (await axios.get('https://m07finalprojectbackend.phillipsnodgras.repl.co/courses', config)).data;
+      console.log(this.courses)
+    } catch (error) {
+      this.$router.push('/login');
+    }
+    
   }
 }
 </script>

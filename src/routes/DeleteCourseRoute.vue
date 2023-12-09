@@ -13,7 +13,7 @@ export default {
   }),
   async created() {
     try {
-      await axios.post(`http://localhost:3000/course/delete/${this.$route.params.id}`)
+      await axios.post(`https://m07finalprojectbackend.phillipsnodgras.repl.co/course/delete/${this.$route.params.id}`)
       this.message = 'The course has been deleted.'
     } catch (err) {
       this.message = `Error: ${err.message}`

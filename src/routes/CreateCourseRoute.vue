@@ -27,13 +27,32 @@ export default {
       subjectArea: '',
       creditHours: 0,
       description: '',
+      pizza: "",
     },
     message: null,
   }),
+  async created() {
+    try
+    {
+      this.pizza = localStorage.getItem('isTeacher')
+    }
+    catch(err){console.error(err)}
+    const config = 
+      {headers:{
+        'authorization': this.pizza
+      }}
+    try {
+      this.courses = (await axios.get('https://m07finalprojectbackend.phillipsnodgras.repl.co/courses', config)).data;
+      console.log(this.courses)
+    } catch (error) {
+      this.$router.push('/login');
+    }
+
+  },
   methods: {
     async submitForm() {
       try {
-        await axios.post('http://localhost:3000/course/create', this.course)
+        await axios.post('https://m07finalprojectbackend.phillipsnodgras.repl.co/course/create', this.course)
         this.message = 'The course has been created.'
         this.$router.push('/courses')
       } catch (err) {
