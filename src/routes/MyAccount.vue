@@ -1,33 +1,26 @@
 <template>
     <v-main>
-      <v-card v-if="user">
-        <p>Welcome, {{ user.username }}!</p>
-        <p>User ID: {{ user.userId }}</p>
-      </v-card>
-      <v-card v-else>
-        <p>Loading...</p>
+      <v-card>
+        <p>Welcome, {{ usernm }}!</p>
+        <p>User ID: {{ usereed }}</p>
       </v-card>
     </v-main>
   </template>
   
   <script>
-  import axios from 'axios';
   
   export default {
     data() {
       return {
-        user: null,
+        usernm: "",
+        usereed: ""
       };
     },
   
-    async created() {
+    created() {
       // Fetch user information including userId
-      try {
-        const response = await axios.get('http://localhost:3000/userinfo');
-        this.user = response.data;
-      } catch (err) {
-        console.error(err);
-      }
+      this.usereed = localStorage.getItem('userId');
+      this.usernm = localStorage.getItem('userName');
     },
   };
   </script>

@@ -27,19 +27,29 @@
       message: null,
     }),
     methods: {
+      // Function to retrieve the user ID from the "userId" cookie
       async submitForm() {
-        try {
-          const response = await axios.post('http://localhost:3000/login', this.user, {withCredentials: true},);
-  
-          // Assuming your server returns the user ID upon successful login
-          const userId = response.data.userId;
-          console.log(userId);
-          
-          // Redirect to the account page or any other destination
-        } catch (err) {
-          this.message = 'Invalid username or password.';
-          console.error(err);
-        }
+          try {
+              const response = await axios.post('https://m07finalprojectbackend.phillipsnodgras.repl.co/login',   this.user, {
+                  withCredentials: true,
+              });
+
+              // Assuming your server returns the user ID upon successful login
+              const userId = response.data.Id;
+              const userName = response.data.username;
+              const isTeacher = response.data.isTeacher;
+              // Save user ID in a cookie
+               // Adjust the expiration as needed
+              localStorage.setItem('userId', userId);
+              localStorage.setItem('userName', userName);
+              localStorage.setItem('isTeacher', isTeacher);
+              console.log(userId);
+              this.$router.push('/account');
+              // Redirect to the account page or any other destination
+          } catch (err) {
+              this.message = 'Invalid username or password.';
+              console.error(err);
+          }
       },
     },
   };

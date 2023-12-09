@@ -24,7 +24,7 @@ export default {
   }),
   async created() {
     try {
-      this.course = (await axios.get(`http://localhost:3000/course/${this.$route.params.id}`)).data;
+      this.course = (await axios.get(`https://m07finalprojectbackend.phillipsnodgras.repl.co/course/${this.$route.params.id}`)).data;
       console.log(this.course)
     } catch (err) {
       this.error = err
@@ -34,7 +34,7 @@ export default {
   methods: {
     async submitForm() {
       try {
-        await axios.post(`http://localhost:3000/course/update/${this.$route.params.id}`, this.course)
+        await axios.post(`https://m07finalprojectbackend.phillipsnodgras.repl.co/course/update/${this.$route.params.id}`, this.course)
         this.message = 'The course has been updated.'
       } catch (err) {
         this.message = 'There was an error updating the course.'
