@@ -24,9 +24,9 @@
     methods: {
       async submitForm() {
         try {
-        localStorage.setItem('userId', null);
-          localStorage.setItem('userName', null);
-          localStorage.setItem('isTeacher', null);
+        localStorage.removeItem('userId');
+          localStorage.removeItem('userName');
+          localStorage.removeItem('isTeacher');
         this.$router.push('/');
         } catch (err) {
           this.message = 'Cannot log out while not logged in'

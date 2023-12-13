@@ -1,1 +1,1 @@
-{"version":2,"languages":{"nodejs-npm":{"specfileHash":"257bee97dfb75d13700a54a2242fc134","lockfileHash":"b2ab5f8a8ec626e9fbfd859883f13155"}}}
+{"version":2,"languages":{"nodejs-npm":{"specfileHash":"71e770e4babd51168bd542028f7104a0","lockfileHash":"1d361c3f267d32b1e511dbb4aa189bdb","guessedImports":["express-session","uuid","bcrypt","@vue/cli-service","body-parser","sqlite3","cors","express"],"guessedImportsHash":"132f60efe9756aa67ec3742407478494"}}}
