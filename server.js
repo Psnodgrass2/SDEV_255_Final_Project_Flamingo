@@ -9,7 +9,7 @@ const uuid = require("uuid");
 
 app.use(
   require("cors")({
-    origin: "https://m07-final-project.phillipsnodgras.repl.co",
+    origin: "https://m08finalprojectfrontend.phillipsnodgras.repl.co",
     credentials: true,
   }),
 );
@@ -35,37 +35,38 @@ app.use(
 //this is the variable for the database. to initialize a new one, look at databaseinitialize.js
 const db = new sqlite3.Database("./serverdatabase.db");
 
-app.get("/test-session", (req, res) => {
-  req.session.userId = "test-user-id";
-  res.send("Session set");
-});
-
-app.get("/check-session", (req, res) => {
-  const userId = req.session.userId;
-  res.send(`User ID from session: ${userId}`);
-});
-
 app.get("/", (req, res) => {
   res.send("hi");
 });
 
 // Retrieve all courses
 app.get("/courses", (req, res) => {
-  console.log(req.headers["authorization"]);
+  isAuthorized = false;
   const authorizationHeader = req.headers["authorization"];
-  if (authorizationHeader != 1) {
-    res.status(401).send("No.");
-    return;
-  } else {
-    db.all("SELECT * FROM courses", (err, rows) => {
-      if (err) {
-        console.error(err.message);
-        res.status(500).send("Internal Server Error");
-        return;
+
+  db.get(
+    "SELECT isTeacher FROM users WHERE uuid = ?",
+    [authorizationHeader],
+    (err, row) => {
+      if ((row && row.isTeacher == 1) || (row && row.isTeacher == 0)) {
+        isAuthorized = true;
       }
-      res.send(rows);
-    });
-  }
+
+      if (isAuthorized == false) {
+        res.status(401).send("No.");
+        return;
+      } else {
+        db.all("SELECT * FROM courses", (err, rows) => {
+          if (err) {
+            console.error(err.message);
+            res.status(500).send("Internal Server Error");
+            return;
+          }
+          res.send(rows);
+        });
+      }
+    },
+  );
 });
 
 // Retrieve a specific course by ID
@@ -89,67 +90,119 @@ app.get("/course/:id", (req, res) => {
 // Update a course by ID
 app.post("/course/update/:id", (req, res) => {
   const id = parseInt(req.params.id);
+  const authorizationHeader = req.headers["authorization"];
 
-  db.run(
-    "UPDATE courses SET name = ?, description = ?, creditHours = ?, subjectArea = ?, teacherId = ? WHERE id = ?",
-    [
-      req.body.name,
-      req.body.description,
-      req.body.creditHours,
-      req.body.subjectArea,
-      req.body.teacherId,
-      id,
-    ],
-    function (err) {
-      if (err) {
-        console.error(err.message);
-        res.status(500).send("Internal Server Error");
-        return;
+  // Check if the user is authorized to update a course
+  db.get(
+    "SELECT isTeacher FROM users WHERE uuid = ?",
+    [authorizationHeader],
+    (err, row) => {
+      if (row && row.isTeacher == 1) {
+        // The user is a teacher, proceed with the update
+        db.run(
+          "UPDATE courses SET name = ?, description = ?, creditHours = ?, subjectArea = ?, teacherId = ? WHERE id = ?",
+          [
+            req.body.name,
+            req.body.description,
+            req.body.creditHours,
+            req.body.subjectArea,
+            req.body.teacherId,
+            id,
+          ],
+          function (err) {
+            if (err) {
+              console.error(err.message);
+              res.status(500).send("Internal Server Error");
+              return;
+            }
+            res.send({});
+          },
+        );
+      } else {
+        // The user is not a teacher, send unauthorized status
+        res.status(401).send("Unauthorized");
       }
-      res.send({});
     },
   );
 });
 
-// Delete a course by ID
 app.post("/course/delete/:id", (req, res) => {
+  console.log(req.params);
+  console.log(req.body);
+  //console.log(req);
+  const authorizationHeader = req.headers["authorization"];
+
   const id = parseInt(req.params.id);
-  console.log("Deleting course:" + id);
-  db.run("DELETE FROM courses WHERE id = ?", [id], function (err) {
-    if (err) {
-      console.error(err.message);
-      res.status(500).send("Internal Server Error");
-      return;
-    }
-    res.send({});
-  });
+  isAuthorized = false;
+  // Check if the user is authorized to delete a course
+  db.get(
+    "SELECT isTeacher FROM users WHERE uuid = ?",
+    [authorizationHeader],
+    (err, row) => {
+      if (row && row.isTeacher == 1) {
+        isAuthorized = true;
+        // The user is a teacher, proceed with the deletion
+        if (isAuthorized == true) {
+          console.log("Deleting course:" + id);
+          db.run("DELETE FROM courses WHERE id = ?", [id], function (err) {
+            if (err) {
+              console.error(err.message);
+              res.status(500).send("Internal Server Error");
+              return;
+            }
+            res.send({});
+          });
+        }
+      } else {
+        // The user is not a teacher, send unauthorized status
+        console.log(row);
+        res.status(401).send("Unauthorized");
+      }
+    },
+  );
 });
 
 // Create a new course
 app.post("/course/create", (req, res) => {
-  db.run(
-    "INSERT INTO courses (name, description, creditHours, subjectArea, teacherId) VALUES (?, ?, ?, ?, ?)",
-    [
-      req.body.name,
-      req.body.description,
-      req.body.creditHours,
-      req.body.subjectArea,
-      req.body.teacherId,
-    ],
-    function (err) {
-      if (err) {
-        console.error(err.message);
-        res.status(500).send("Internal Server Error");
-        return;
+  console.log(req.headers["authorization"]);
+  isAuthorized = false;
+  const authorizationHeader = req.headers["authorization"];
+  db.get(
+    "SELECT isTeacher FROM users WHERE uuid = ?",
+    [authorizationHeader],
+    (err, row) => {
+      if (row && row.isTeacher == 1) {
+        isAuthorized = true;
+        console.log(isAuthorized + "one");
+        if (isAuthorized == true) {
+          db.run(
+            "INSERT INTO courses (name, description, creditHours, subjectArea, teacherId) VALUES (?, ?, ?, ?, ?)",
+            [
+              req.body.name,
+              req.body.description,
+              req.body.creditHours,
+              req.body.subjectArea,
+              req.body.teacherId,
+            ],
+            function (err) {
+              if (err) {
+                console.error(err.message);
+                res.status(500).send("Internal Server Error");
+                return;
+              }
+              res.send({});
+            },
+          );
+        } else {
+          res.status(401).send("No.");
+        }
       }
-      res.send({});
     },
   );
 });
 
 app.post("/register", async (req, res) => {
   const { username, password, isTeacher } = req.body;
-  console.log(req.session.userId);
   // Hash and salt the password
   const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -184,21 +237,24 @@ app.post("/login", async (req, res) => {
         // Use a pre-generated UUID or retrieve it from the user data in the database
         const userId = uuid.v4();
 
-        // Set the user ID in the session
-        req.session.userId = userId;
+        // Store the UUID in the database
+        db.run(
+          "UPDATE users SET uuid = ? WHERE username = ?",
+          [userId, username],
+          (updateErr) => {
+            if (updateErr) {
+              return res
+                .status(500)
+                .json({ error: "Error updating user UUID" });
+            }
 
-        try {
-          await req.session.save(); // Simply calling save without a callback
-        } catch (saveError) {
-          console.error("Error saving session:", saveError);
-          return res.status(500).json({ error: "Error saving session" });
-        }
-
-        res.json({
-          Id: userId,
-          username: user.username,
-          isTeacher: user.isTeacher,
-        });
+            res.json({
+              Id: userId,
+              username: user.username,
+              isTeacher: user.isTeacher,
+            });
+          },
+        );
       } else {
         res.status(401).json({ error: "Invalid username or password" });
       }
@@ -206,30 +262,103 @@ app.post("/login", async (req, res) => {
   );
 });
 
-app.get("/userinfo", (req, res) => {
-  // Assuming userId is stored in the session
-  const userId = req.session.userId;
-  console.log(userId);
-  // Fetch user information from the database or any other source
-  // Example using SQLite3
-  db.get("SELECT username FROM users WHERE uuid = ?", [userId], (err, user) => {
-    if (err) {
-      return res
-        .status(500)
-        .json({ error: "Error retrieving user information" });
-    }
+app.get("/auth/check", (req, res) => {
+  const authorizationHeader = req.headers["authorization"];
 
-    if (user) {
-      // Respond with user-specific data, including the username
-      const userInfo = {
-        userId: userId,
-        username: user.username,
-      };
-      res.json(userInfo);
-    } else {
-      res.status(404).json({ error: "User not found" });
-    }
-  });
+  if (!authorizationHeader) {
+    // No authorization header, user is not authenticated
+    res.status(401).send("Unauthorized");
+    return;
+  }
+
+  // Check if the user is a teacher
+  db.get(
+    "SELECT isTeacher FROM users WHERE uuid = ?",
+    [authorizationHeader],
+    (err, row) => {
+      if (row && row.isTeacher == 1) {
+        // The user is authenticated and is a teacher
+        res.send({ authenticated: true, isTeacher: true });
+      } else {
+        // The user is authenticated but not a teacher
+        res.send({ authenticated: true, isTeacher: false });
+      }
+    },
+  );
+});
+
+app.post("/checkout", (req, res) => {
+  const checkoutcourses = req.body;
+  const authorizationHeader = req.headers["authorization"];
+  console.log(checkoutcourses);
+  db.get(
+    "SELECT * FROM users WHERE uuid = ?",
+    [authorizationHeader],
+    async (err, user) => {
+      if (err) {
+        return res.status(500).json({ error: "Error finding user" });
+      }
+
+      const Uusername = user.username;
+
+      // Insert each course into the database
+      checkoutcourses.forEach((course) => {
+        // Customize this query based on your data structure
+        const checkoutquery = `
+          INSERT INTO purchases (username, classname, description, creditHours, subjectArea)
+          VALUES (?, ?, ?, ?, ?)
+        `;
+
+        db.run(
+          checkoutquery,
+          [
+            Uusername,
+            course.name,
+            course.description,
+            course.creditHours,
+            course.subjectArea,
+          ],
+          function (err) {
+            if (err) {
+              console.error(err.message);
+              return res.status(500).json({ error: "Internal Server Error" });
+            }
+
+            console.log(`A row has been inserted with rowid ${this.lastID}`);
+          },
+        );
+      });
+
+      res.status(200).json({ message: "Courses inserted successfully" });
+    },
+  );
+});
+
+app.get("/studentclasslist", (req, res) => {
+  const authorizationHeader = req.headers["authorization"];
+  db.get(
+    "SELECT * FROM users WHERE uuid = ?",
+    [authorizationHeader],
+    async (err, user) => {
+      if (err) {
+        return res.status(500).json({ error: "Error finding user" });
+      }
+      if (user) {
+        db.all(
+          "SELECT * FROM purchases WHERE username = ?",
+          [user.username],
+          async (err, courses) => {
+            if (err) {
+              return res.status(500).json({ error: "Error finding courses" });
+            }
+            res.send(courses);
+          },
+        );
+      } else {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+    },
+  );
 });
 
 app.listen(port, () => console.log(`App running at http://localhost:${port}`));
