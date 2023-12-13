@@ -19,7 +19,7 @@ export default {
   }),
   async created() {
     try {
-      this.course = (await axios.get(`https://m07finalprojectbackend.phillipsnodgras.repl.co/course/${this.$route.params.id}`)).data;
+      this.course = (await axios.get(`https://m08finalprojectbackend.phillipsnodgras.repl.co/course/${this.$route.params.id}`)).data;
       console.log(this.course)
     } catch (err) {
       this.error = err
